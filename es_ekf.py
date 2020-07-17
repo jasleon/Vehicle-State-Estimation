@@ -155,6 +155,25 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     delta_t = imu_f.t[k] - imu_f.t[k - 1]
 
     # 1. Update state with IMU inputs
+    p_check = np.zeros(3) # position prediction
+    v_check = np.zeros(3) # velocity prediction
+    q_check = np.zeros(4) # orientation prediction as quaternions
+    p_cov_check = np.zeros([9, 9]) # covariance prediction
+    Cns = np.zeros([3, 3]) # quaternion rotation as matrix
+    Fns = np.zeros(3) # sum of forces
+
+    q_prev = Quaternion(w=q_est[k - 1, 0],
+                        x=q_est[k - 1, 1],
+                        y=q_est[k - 1, 2],
+                        z=q_est[k - 1, 3]) # previous orientation as a quaternion object
+    q_curr = Quaternion(axis_angle=(imu_w.data[k - 1]*delta_t)) # current IMU orientation
+
+    Cns = q_prev.to_mat() # previous orientation as a matrix
+    Fns = np.dot(Cns, imu_f.data[k - 1]) + g # calculate sum of forces
+    
+    p_check = p_est[k - 1, :] + delta_t*v_est[k - 1, :] + 0.5*(delta_t**2)*Fns
+    v_check = v_est[k - 1, :] + delta_t*Fns
+    q_check = q_prev.quat_mult_left(q_curr)
 
     # 1.1 Linearize the motion model and compute Jacobians
 
@@ -163,6 +182,10 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     # 3. Check availability of GNSS and LIDAR measurements
 
     # Update states (save)
+    p_est[k, :] = p_check
+    v_est[k, :] = v_check
+    q_est[k, :] = q_check
+    p_cov[k, :, :] = p_cov_check
 
 #### 6. Results and Analysis ###################################################################
 
