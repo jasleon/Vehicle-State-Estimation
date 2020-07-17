@@ -159,8 +159,9 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     v_check = np.zeros(3) # velocity prediction
     q_check = np.zeros(4) # orientation prediction as quaternions
     p_cov_check = np.zeros([9, 9]) # covariance prediction
-    Cns = np.zeros([3, 3]) # quaternion rotation as matrix
-    Fns = np.zeros(3) # sum of forces
+    c_ns = np.zeros([3, 3]) # quaternion rotation as matrix
+    f_ns = np.zeros(3) # sum of forces
+    cov_motion = np.zeros([6, 6]) # input noise covariance
 
     q_prev = Quaternion(w=q_est[k - 1, 0],
                         x=q_est[k - 1, 1],
@@ -168,16 +169,22 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
                         z=q_est[k - 1, 3]) # previous orientation as a quaternion object
     q_curr = Quaternion(axis_angle=(imu_w.data[k - 1]*delta_t)) # current IMU orientation
 
-    Cns = q_prev.to_mat() # previous orientation as a matrix
-    Fns = np.dot(Cns, imu_f.data[k - 1]) + g # calculate sum of forces
+    c_ns = q_prev.to_mat() # previous orientation as a matrix
+    f_ns = (c_ns @ imu_f.data[k - 1]) + g # calculate sum of forces
     
-    p_check = p_est[k - 1, :] + delta_t*v_est[k - 1, :] + 0.5*(delta_t**2)*Fns
-    v_check = v_est[k - 1, :] + delta_t*Fns
+    p_check = p_est[k - 1, :] + delta_t*v_est[k - 1, :] + 0.5*(delta_t**2)*f_ns
+    v_check = v_est[k - 1, :] + delta_t*f_ns
     q_check = q_prev.quat_mult_left(q_curr)
 
     # 1.1 Linearize the motion model and compute Jacobians
+    f_jac = np.eye(9) # motion model jacobian with respect to last state
+    f_jac[:3, 3:6] = np.eye(3)*delta_t
+    f_jac[3:6, 6:] = - skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
 
     # 2. Propagate uncertainty
+    cov_motion[:3, :3] = (delta_t**2)*var_imu_f*np.eye(3)
+    cov_motion[3:, 3:] = (delta_t**2)*var_imu_w*np.eye(3)
+    p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ cov_motion @ l_jac.T
 
     # 3. Check availability of GNSS and LIDAR measurements
 
