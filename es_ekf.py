@@ -127,6 +127,8 @@ q_est[0] = Quaternion(euler=gt.r[0]).to_numpy()
 p_cov[0] = np.zeros(9)  # covariance of estimate
 gnss_i  = 0
 lidar_i = 0
+gnss_t = list(gnss.t)
+lidar_t = list(lidar.t)
 
 #### 4. Measurement Update #####################################################################
 
@@ -140,8 +142,12 @@ def measurement_update(sensor_var, p_cov_check, y_k, p_check, v_check, q_check):
     # 3.2 Compute error state
 
     # 3.3 Correct predicted state
+    p_hat = p_check
+    v_hat = v_check
+    q_hat = q_check
 
     # 3.4 Compute corrected covariance
+    p_cov_hat = p_cov_check
 
     return p_hat, v_hat, q_hat, p_cov_hat
 
@@ -187,6 +193,15 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ cov_motion @ l_jac.T
 
     # 3. Check availability of GNSS and LIDAR measurements
+    if imu_f.t[k] in gnss_t:
+        gnss_i = gnss_t.index(imu_f.t[k])
+        # print('gnss.data[{}]: {}'.format(gnss_i, gnss.data[gnss_i]))
+        p_check, v_check, q_check, p_cov_check = measurement_update(var_gnss, p_cov_check, gnss.data[gnss_i], p_check, v_check, q_check)
+    
+    if imu_f.t[k] in lidar_t:
+        lidar_i = lidar_t.index(imu_f.t[k])
+        # print('lidar.data[{}]: {}'.format(lidar_i, lidar.data[lidar_i]))
+        p_check, v_check, q_check, p_cov_check = measurement_update(var_lidar, p_cov_check, lidar.data[lidar_i], p_check, v_check, q_check)
 
     # Update states (save)
     p_est[k, :] = p_check
