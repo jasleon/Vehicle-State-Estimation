@@ -71,18 +71,18 @@ lidar = data['lidar']
 # THIS IS THE CODE YOU WILL MODIFY FOR PART 2 OF THE ASSIGNMENT.
 ################################################################################################
 # Correct calibration rotation matrix, corresponding to Euler RPY angles (0.05, 0.05, 0.1).
-C_li = np.array([
-   [ 0.99376, -0.09722,  0.05466],
-   [ 0.09971,  0.99401, -0.04475],
-   [-0.04998,  0.04992,  0.9975 ]
-])
+# C_li = np.array([
+#    [ 0.99376, -0.09722,  0.05466],
+#    [ 0.09971,  0.99401, -0.04475],
+#    [-0.04998,  0.04992,  0.9975 ]
+# ])
 
 # Incorrect calibration rotation matrix, corresponding to Euler RPY angles (0.05, 0.05, 0.05).
-# C_li = np.array([
-#      [ 0.9975 , -0.04742,  0.05235],
-#      [ 0.04992,  0.99763, -0.04742],
-#      [-0.04998,  0.04992,  0.9975 ]
-# ])
+C_li = np.array([
+     [ 0.9975 , -0.04742,  0.05235],
+     [ 0.04992,  0.99763, -0.04742],
+     [-0.04998,  0.04992,  0.9975 ]
+])
 
 t_i_li = np.array([0.5, 0.1, 0.5])
 
@@ -96,10 +96,10 @@ lidar.data = (C_li @ lidar.data.T).T + t_i_li
 # most important aspects of a filter is setting the estimated sensor variances correctly.
 # We set the values here.
 ################################################################################################
-var_imu_f = 0.10
-var_imu_w = 0.10
+var_imu_f = 0.01
+var_imu_w = 0.05
 var_gnss  = 0.10
-var_lidar = 2.00
+var_lidar = 20.0
 
 ################################################################################################
 # We can also set up some constants that won't change for any iteration of our solver.
@@ -297,22 +297,22 @@ plt.show()
 ################################################################################################
 
 # Pt. 1 submission
-p1_indices = [9000, 9400, 9800, 10200, 10600]
-p1_str = ''
-for val in p1_indices:
-    for i in range(3):
-        p1_str += '%.3f ' % (p_est[val, i])
-with open('pt1_submission.txt', 'w') as file:
-    file.write(p1_str)
+# p1_indices = [9000, 9400, 9800, 10200, 10600]
+# p1_str = ''
+# for val in p1_indices:
+#     for i in range(3):
+#         p1_str += '%.3f ' % (p_est[val, i])
+# with open('pt1_submission.txt', 'w') as file:
+#     file.write(p1_str)
 
 # Pt. 2 submission
-# p2_indices = [9000, 9400, 9800, 10200, 10600]
-# p2_str = ''
-# for val in p2_indices:
-#     for i in range(3):
-#         p2_str += '%.3f ' % (p_est[val, i])
-# with open('pt2_submission.txt', 'w') as file:
-#     file.write(p2_str)
+p2_indices = [9000, 9400, 9800, 10200, 10600]
+p2_str = ''
+for val in p2_indices:
+    for i in range(3):
+        p2_str += '%.3f ' % (p_est[val, i])
+with open('pt2_submission.txt', 'w') as file:
+    file.write(p2_str)
 
 # Pt. 3 submission
 # p3_indices = [6800, 7600, 8400, 9200, 10000]
