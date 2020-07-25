@@ -129,6 +129,8 @@ gnss_i  = 0
 lidar_i = 0
 gnss_t = list(gnss.t)
 lidar_t = list(lidar.t)
+gnss_dropout = False
+lidar_dropout = False
 
 #### 4. Measurement Update #####################################################################
 
@@ -198,6 +200,10 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     f_jac[3:6, 6:] = - skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
 
     # 2. Propagate uncertainty
+    if gnss_dropout and lidar_dropout:
+        # 2.1 Increase the prediction uncertainty at each iteration while dead reckoning
+        var_imu_f += 0.10
+        var_imu_w += 0.10
     cov_motion[:3, :3] = (delta_t**2)*var_imu_f*np.eye(3)
     cov_motion[3:, 3:] = (delta_t**2)*var_imu_w*np.eye(3)
     p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ cov_motion @ l_jac.T
@@ -206,11 +212,13 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     if imu_f.t[k] in gnss_t:
         gnss_i = gnss_t.index(imu_f.t[k])
         # print('gnss.data[{}]: {}'.format(gnss_i, gnss.data[gnss_i]))
+        gnss_dropout = (gnss_i + 1 == len(gnss_t))
         p_check, v_check, q_check, p_cov_check = measurement_update(var_gnss, p_cov_check, gnss.data[gnss_i], p_check, v_check, q_check)
     
     if imu_f.t[k] in lidar_t:
         lidar_i = lidar_t.index(imu_f.t[k])
         # print('lidar.data[{}]: {}'.format(lidar_i, lidar.data[lidar_i]))
+        lidar_dropout = (lidar_i + 1 == len(lidar_t))
         p_check, v_check, q_check, p_cov_check = measurement_update(var_lidar, p_cov_check, lidar.data[lidar_i], p_check, v_check, q_check)
 
     # Update states (save)
