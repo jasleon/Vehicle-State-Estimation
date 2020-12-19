@@ -1,7 +1,11 @@
 # Vehicle State Estimation on a Roadway
-This project implements the Error-State Extended Kalman Filter (ES-EKF) to localize a vehicle using data from the CARLA simulator. 
+This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to localize a vehicle using data from the CARLA simulator. The following diagram shows a graphical representation of the system.
 
-The starter code is provided by Coursera and can be found here.
+<img src="images\diagram.png" style="zoom: 80%;" />
+
+
+
+This project is the final programming assignment for the [State Estimation and Localization for Self-Driving Cars course](https://www.coursera.org/learn/state-estimation-localization-self-driving-cars?) in [Coursera](https://www.coursera.org/). The starter code is provided by the [University of Toronto](https://www.utoronto.ca/).
 
 ## Preliminaries
 
