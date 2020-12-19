@@ -1,11 +1,16 @@
 # Vehicle State Estimation on a Roadway
-This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to localize a vehicle using data from the CARLA simulator. The following diagram shows a graphical representation of the system.
+This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to localize a vehicle using data from the [CARLA](https://carla.org/) simulator. The following diagram shows a graphical representation of the system.
 
 <img src="images\diagram.png" style="zoom: 80%;" />
 
 
 
-This project is the final programming assignment for the [State Estimation and Localization for Self-Driving Cars course](https://www.coursera.org/learn/state-estimation-localization-self-driving-cars?) in [Coursera](https://www.coursera.org/). The starter code is provided by the [University of Toronto](https://www.utoronto.ca/).
+This project is the final programming assignment of the [State Estimation and Localization for Self-Driving Cars](https://www.coursera.org/learn/state-estimation-localization-self-driving-cars?) course from [Coursera](https://www.coursera.org/). The starter code is provided by the [University of Toronto](https://www.utoronto.ca/).
+
+The **Kalman Filter** algorithm updates a state estimate through two stages:
+
+1. *prediction* using the motion model
+2. *correction* using the measurement model
 
 ## Preliminaries
 
@@ -37,13 +42,55 @@ lidar_i = 0
 
 ## Prediction
 
+The main filter loop operates by first **predicting** the next state (vehicle pose and velocity). The predicted vehicle state integrates the high-rate IMU measurements by using a nonlinear motion model.
+
 ### Motion Model
 
-The motion model of the vehicle is given by the following equations
+The motion model of the vehicle is given by the following set of equations
 
 | Description | Equation                                                     |
 | ----------- | ------------------------------------------------------------ |
 | Position    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cp%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
 | Velocity    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cv%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
 | Orientation | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cq%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%3D%5Cboldsymbol%7B%5COmega%7D(%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt))%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%0A"> |
+
+### Predicted State
+
+The **predicted** vehicle state is therefore given by the equations
+
+| Description               | Equation                                                     |
+| ------------------------- | ------------------------------------------------------------ |
+| *Predicted* Vehicle State | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cx%7D%7D_%7Bk%7D%3D%5B%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%5D%5ET%0A"> |
+| *Predicted* Position      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
+| *Predicted* Velocity      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
+| *Predicted* Orientation   | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%0A"> |
+
+This section of code iterates through the IMU inputs and updates the state.
+
+```python
+for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial prediction from gt
+    delta_t = imu_f.t[k] - imu_f.t[k - 1]
+
+    # 1. Update state with IMU inputs
+    p_check = np.zeros(3) # position prediction
+    v_check = np.zeros(3) # velocity prediction
+    q_check = np.zeros(4) # orientation prediction as quaternions
+    p_cov_check = np.zeros([9, 9]) # covariance prediction
+    c_ns = np.zeros([3, 3]) # quaternion rotation as matrix
+    f_ns = np.zeros(3) # sum of forces
+    cov_motion = np.zeros([6, 6]) # input noise covariance
+
+    q_prev = Quaternion(w=q_est[k - 1, 0],
+                        x=q_est[k - 1, 1],
+                        y=q_est[k - 1, 2],
+                        z=q_est[k - 1, 3]) # previous orientation as a quaternion object
+    q_curr = Quaternion(axis_angle=(imu_w.data[k - 1]*delta_t)) # current IMU orientation
+
+    c_ns = q_prev.to_mat() # previous orientation as a matrix
+    f_ns = (c_ns @ imu_f.data[k - 1]) + g # calculate sum of forces
+    
+    p_check = p_est[k - 1, :] + delta_t*v_est[k - 1, :] + 0.5*(delta_t**2)*f_ns
+    v_check = v_est[k - 1, :] + delta_t*f_ns
+    q_check = q_prev.quat_mult_left(q_curr)
+```
 
