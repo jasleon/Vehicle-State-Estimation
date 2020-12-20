@@ -58,12 +58,12 @@ The motion model of the vehicle is given by the following set of equations
 
 The **predicted** vehicle state is therefore given by the equations
 
-| Name      | Description               | Equation                                                     |
-| --------- | ------------------------- | ------------------------------------------------------------ |
-| `x_check` | *Predicted* Vehicle State | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cx%7D%7D_%7Bk%7D%3D%5B%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%5D%5ET%0A"> |
-| `p_check` | *Predicted* Position      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
-| `v_check` | *Predicted* Velocity      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
-| `q_check` | *Predicted* Orientation   | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%0A"> |
+| Description               | Equation                                                     | Variable  |
+| ------------------------- | ------------------------------------------------------------ | --------- |
+| *Predicted* Vehicle State | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cx%7D%7D_%7Bk%7D%3D%5B%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%5D%5ET%0A"> | `x_check` |
+| *Predicted* Position      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> | `p_check` |
+| *Predicted* Velocity      | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> | `v_check` |
+| *Predicted* Orientation   | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%0A"> | `q_check` |
 
 This section of code iterates through the IMU inputs and updates the state.
 
@@ -99,4 +99,13 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
 In the previous section, the nominal state (`x_check`) propagated forward in time. However, this prediction ignores noise and perturbations. The ES-EKF algorithm captures these deviations in the error state vector. 
 
 The next step is to consider the linearized error dynamics of the system.
+
+| Description                 | Equation                                                     |
+| --------------------------- | ------------------------------------------------------------ |
+| Error State                 | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk%7D%3D%5B%5Cdelta%5Cboldsymbol%7B%5Cp%7D_%7Bk%7D%2C%20%5Cdelta%5Cboldsymbol%7B%5Cv%7D_%7Bk%7D%2C%20%5Cdelta%5Cboldsymbol%7B%5Cphi%7D_%7Bk%7D%5D%5ET%20%5Cin%20R%5E9%0A"> |
+| Error Dynamics              | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk-1%7D%2B%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%5Cboldsymbol%7B%5Cn%7D_%7Bk-1%7D%0A"> |
+| Measurement Noise           | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cn%7D_%7Bk%7D%5Csim%20N(%5Cboldsymbol%7B0%7D%2C%20%5Cboldsymbol%7BQ%7D_%7Bk%7D)%0A"> |
+| Motion Model Jacobian       | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7B%5CI%7D%26%5Cboldsymbol%7B%5CI%7D%5CDelta%20t%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%26-%5B%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%5D_%7B%5Ctimes%7D%5CDelta%20t%5C%5C0%260%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> |
+| Motion Model Noise Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D0%260%5C%5C%5Cboldsymbol%7B%5CI%7D%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> |
+| IMU Noise Covariance        | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CQ%7D_%7Bk%7D%0A"> |
 
