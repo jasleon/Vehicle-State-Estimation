@@ -171,10 +171,7 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     delta_t = imu_f.t[k] - imu_f.t[k - 1]
 
     # 1. Update state with IMU inputs
-    q_prev = Quaternion(w=q_est[k - 1, 0],
-                        x=q_est[k - 1, 1],
-                        y=q_est[k - 1, 2],
-                        z=q_est[k - 1, 3]) # previous orientation as a quaternion object
+    q_prev = Quaternion(*q_est[k - 1, :]) # previous orientation as a quaternion object
     q_curr = Quaternion(axis_angle=(imu_w.data[k - 1]*delta_t)) # current IMU orientation
     c_ns = q_prev.to_mat() # previous orientation as a matrix
     f_ns = (c_ns @ imu_f.data[k - 1]) + g # calculate sum of forces
