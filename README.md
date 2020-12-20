@@ -72,23 +72,13 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     delta_t = imu_f.t[k] - imu_f.t[k - 1]
 
     # 1. Update state with IMU inputs
-    p_check = np.zeros(3) # position prediction
-    v_check = np.zeros(3) # velocity prediction
-    q_check = np.zeros(4) # orientation prediction as quaternions
-    p_cov_check = np.zeros([9, 9]) # covariance prediction
-    c_ns = np.zeros([3, 3]) # quaternion rotation as matrix
-    f_ns = np.zeros(3) # sum of forces
-    cov_motion = np.zeros([6, 6]) # input noise covariance
-
     q_prev = Quaternion(w=q_est[k - 1, 0],
                         x=q_est[k - 1, 1],
                         y=q_est[k - 1, 2],
                         z=q_est[k - 1, 3]) # previous orientation as a quaternion object
     q_curr = Quaternion(axis_angle=(imu_w.data[k - 1]*delta_t)) # current IMU orientation
-
     c_ns = q_prev.to_mat() # previous orientation as a matrix
     f_ns = (c_ns @ imu_f.data[k - 1]) + g # calculate sum of forces
-    
     p_check = p_est[k - 1, :] + delta_t*v_est[k - 1, :] + 0.5*(delta_t**2)*f_ns
     v_check = v_est[k - 1, :] + delta_t*f_ns
     q_check = q_prev.quat_mult_left(q_curr)
@@ -108,11 +98,11 @@ The next step is to consider the linearized error dynamics of the system.
 
 The Jacobians and the noise covariance matrix are defined as follows
 
-| Description                 | Equation                                                     | Variable     |
-| --------------------------- | ------------------------------------------------------------ | ------------ |
-| Motion Model Jacobian       | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7B%5CI%7D%26%5Cboldsymbol%7B%5CI%7D%5Ccdot%5CDelta%20t%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%26-%5B%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%5D_%7B%5Ctimes%7D%5CDelta%20t%5C%5C0%260%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `f_jac`      |
-| Motion Model Noise Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D0%260%5C%5C%5Cboldsymbol%7B%5CI%7D%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `l_jac`      |
-| IMU Noise Covariance        | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CQ%7D_%7Bk%7D%3D%5CDelta%20t%5E2%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bacc%7D%5E2%260%5C%5C0%26%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bgyro%7D%5E2%5Cend%7Bbmatrix%7D%0A"> | `cov_motion` |
+| Description                 | Equation                                                     | Variable |
+| --------------------------- | ------------------------------------------------------------ | -------- |
+| Motion Model Jacobian       | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7B%5CI%7D%26%5Cboldsymbol%7B%5CI%7D%5Ccdot%5CDelta%20t%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%26-%5B%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%5D_%7B%5Ctimes%7D%5CDelta%20t%5C%5C0%260%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `f_jac`  |
+| Motion Model Noise Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D0%260%5C%5C%5Cboldsymbol%7B%5CI%7D%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `l_jac`  |
+| IMU Noise Covariance        | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CQ%7D_%7Bk%7D%3D%5CDelta%20t%5E2%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bacc%7D%5E2%260%5C%5C0%26%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bgyro%7D%5E2%5Cend%7Bbmatrix%7D%0A"> | `q_cov`  |
 
 where ***I*** is the 3 by 3 identity matrix.
 
@@ -121,8 +111,8 @@ This section of code calculates the motion model Jacobian
 ```python
     # 1.1 Linearize the motion model and compute Jacobians
     f_jac = np.eye(9) # motion model jacobian with respect to last state
-    f_jac[:3, 3:6] = np.eye(3)*delta_t
-    f_jac[3:6, 6:] = - skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
+    f_jac[0:3, 3:6] = np.eye(3)*delta_t
+    f_jac[3:6, 6:9] = -skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
 ```
 
 ### 2.4. Propagate Uncertainty
@@ -139,8 +129,9 @@ This section of code calculates the state uncertainty
 
 ```python
     # 2. Propagate uncertainty
-    cov_motion[:3, :3] = (delta_t**2)*var_imu_f*np.eye(3)
-    cov_motion[3:, 3:] = (delta_t**2)*var_imu_w*np.eye(3)
-    p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ cov_motion @ l_jac.T
+    q_cov = np.zeros((6, 6)) # IMU noise covariance
+    q_cov[0:3, 0:3] = delta_t**2 * np.eye(3)*var_imu_f
+    q_cov[3:6, 3:6] = delta_t**2 * np.eye(3)*var_imu_w
+    p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ q_cov @ l_jac.T
 ```
 
