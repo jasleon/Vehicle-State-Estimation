@@ -193,11 +193,11 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
 
     # 1.1 Linearize the motion model and compute Jacobians
     f_jac = np.eye(9) # motion model jacobian with respect to last state
-    f_jac[:3, 3:6] = np.eye(3)*delta_t
-    f_jac[3:6, 6:] = - skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
+    f_jac[0:3, 3:6] = np.eye(3)*delta_t
+    f_jac[3:6, 6:9] = -skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
 
     # 2. Propagate uncertainty
-    q_cov = np.zeros([6, 6]) # IMU noise covariance
+    q_cov = np.zeros((6, 6)) # IMU noise covariance
     q_cov[0:3, 0:3] = delta_t**2 * np.eye(3)*var_imu_f
     q_cov[3:6, 3:6] = delta_t**2 * np.eye(3)*var_imu_w
     p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ q_cov @ l_jac.T
