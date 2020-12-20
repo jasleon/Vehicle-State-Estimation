@@ -177,7 +177,6 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     p_cov_check = np.zeros([9, 9]) # covariance prediction
     c_ns = np.zeros([3, 3]) # quaternion rotation as matrix
     f_ns = np.zeros(3) # sum of forces
-    cov_motion = np.zeros([6, 6]) # input noise covariance
 
     q_prev = Quaternion(w=q_est[k - 1, 0],
                         x=q_est[k - 1, 1],
@@ -198,9 +197,10 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     f_jac[3:6, 6:] = - skew_symmetric(c_ns @ imu_f.data[k - 1])*delta_t
 
     # 2. Propagate uncertainty
-    cov_motion[:3, :3] = (delta_t**2)*var_imu_f*np.eye(3)
-    cov_motion[3:, 3:] = (delta_t**2)*var_imu_w*np.eye(3)
-    p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ cov_motion @ l_jac.T
+    q_cov = np.zeros([6, 6]) # IMU noise covariance
+    q_cov[0:3, 0:3] = delta_t**2 * np.eye(3)*var_imu_f
+    q_cov[3:6, 3:6] = delta_t**2 * np.eye(3)*var_imu_w
+    p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ q_cov @ l_jac.T
 
     # 3. Check availability of GNSS and LIDAR measurements
     if imu_f.t[k] in gnss_t:
