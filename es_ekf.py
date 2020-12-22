@@ -138,8 +138,8 @@ lidar_t = list(lidar.t)
 ################################################################################################
 def measurement_update(sensor_var, p_cov_check, y_k, p_check, v_check, q_check):
     # 3.1 Compute Kalman Gain
-    ino_cov = (h_jac @ p_cov_check @ h_jac.T) + sensor_var*np.eye(3)
-    k_gain = p_cov_check @ h_jac.T @ np.linalg.inv(ino_cov)
+    r_cov = np.eye(3)*sensor_var
+    k_gain = p_cov_check @ h_jac.T @ np.linalg.inv((h_jac @ p_cov_check @ h_jac.T) + r_cov)
 
     # 3.2 Compute error state
     error_state = k_gain @ (y_k - p_check)
@@ -193,13 +193,13 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     # 3. Check availability of GNSS and LIDAR measurements
     if imu_f.t[k] in gnss_t:
         gnss_i = gnss_t.index(imu_f.t[k])
-        # print('gnss.data[{}]: {}'.format(gnss_i, gnss.data[gnss_i]))
-        p_check, v_check, q_check, p_cov_check = measurement_update(var_gnss, p_cov_check, gnss.data[gnss_i], p_check, v_check, q_check)
+        p_check, v_check, q_check, p_cov_check = \
+            measurement_update(var_gnss, p_cov_check, gnss.data[gnss_i], p_check, v_check, q_check)
     
     if imu_f.t[k] in lidar_t:
         lidar_i = lidar_t.index(imu_f.t[k])
-        # print('lidar.data[{}]: {}'.format(lidar_i, lidar.data[lidar_i]))
-        p_check, v_check, q_check, p_cov_check = measurement_update(var_lidar, p_cov_check, lidar.data[lidar_i], p_check, v_check, q_check)
+        p_check, v_check, q_check, p_cov_check = \
+            measurement_update(var_lidar, p_cov_check, lidar.data[lidar_i], p_check, v_check, q_check)
 
     # Update states (save)
     p_est[k, :] = p_check

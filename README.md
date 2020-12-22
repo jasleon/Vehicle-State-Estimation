@@ -132,3 +132,49 @@ This section of code calculates the state uncertainty
     p_cov_check = f_jac @ p_cov[k - 1, :, :] @ f_jac.T + l_jac @ q_cov @ l_jac.T
 ```
 
+## 3. Correction
+
+### 3.1. Measurement Availability
+
+The IMU data arrives at a faster rate than either GNSS or LIDAR sensor measurements. The algorithm checks the measurement availability and calls a function to correct our prediction.
+
+```python
+    # 3. Check availability of GNSS and LIDAR measurements
+    if imu_f.t[k] in gnss_t:
+        gnss_i = gnss_t.index(imu_f.t[k])
+        p_check, v_check, q_check, p_cov_check = \
+            measurement_update(var_gnss, p_cov_check, gnss.data[gnss_i], p_check, v_check, q_check)
+    
+    if imu_f.t[k] in lidar_t:
+        lidar_i = lidar_t.index(imu_f.t[k])
+        p_check, v_check, q_check, p_cov_check = \
+            measurement_update(var_lidar, p_cov_check, lidar.data[lidar_i], p_check, v_check, q_check)
+```
+
+### 3.2. Measurement Model
+
+The measurement model is the same for both sensors. However, they have different noise covariance.
+
+| Description             | Equation                                                     |
+| ----------------------- | ------------------------------------------------------------ |
+| Measurement Model       | <img src="https://render.githubusercontent.com/render/math?math=%5Cbegin%7Bsplit%7D%0A%5Cboldsymbol%7By%7D_%7Bk%7D%20%26%3D%20%5Cboldsymbol%7Bh%7D(%5Cboldsymbol%7Bx%7D_%7Bk%7D)%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5C%5C%0A%26%20%3D%5Cboldsymbol%7BH%7D_%7Bk%7D%5Cboldsymbol%7Bx%7D_%7Bk%7D%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5C%5C%0A%26%20%3D%20%5Cboldsymbol%7Bp%7D_%7Bk%7D%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%0A%5Cend%7Bsplit%7D%0A"> |
+| GNSS Measurement Noise  | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5Csim%20N(0%2C%20%5Cboldsymbol%7BR%7D_%7B%5CGNSS%7D)%0A"> |
+| LIDAR Measurement Noise | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5Csim%20N(0%2C%20%5Cboldsymbol%7BR%7D_%7B%5CLIDAR%7D)%0A"> |
+
+### 3.3. Measurement Update
+
+Measurements are processed sequentially by the EKF as they arrive; in our case, both the GNSS receiver and the LIDAR provide position updates.
+
+| Description                | Equation                                                     | Variable |
+| -------------------------- | ------------------------------------------------------------ | -------- |
+| Measurement Model Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BH%7D_%7Bk%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7BI%7D%260%260%5C%5C%5Cend%7Bbmatrix%7D%0A"> | `h_jac`  |
+| Sensor Noise Covariance    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BR%7D%3D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7B%5Csensor%7D%5E2%0A"> | `r_cov`  |
+| Kalman Gain                | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BK%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D(%5Cboldsymbol%7BH%7D_%7Bk%7D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D%2B%5Cboldsymbol%7BR%7D)%5E%7B-1%7D%0A"> | `k_gain` |
+
+```python
+def measurement_update(sensor_var, p_cov_check, y_k, p_check, v_check, q_check):
+    # 3.1 Compute Kalman Gain
+    r_cov = np.eye(3)*sensor_var
+    k_gain = p_cov_check @ h_jac.T @ np.linalg.inv((h_jac @ p_cov_check @ h_jac.T) + r_cov)
+```
+
