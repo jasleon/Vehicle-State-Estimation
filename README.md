@@ -136,7 +136,9 @@ This section of code calculates the state uncertainty
 
 ### 3.1. Measurement Availability
 
-The IMU data arrives at a faster rate than either GNSS or LIDAR sensor measurements. The algorithm checks the measurement availability and calls a function to correct our prediction.
+The IMU data arrives at a faster rate than either GNSS or LIDAR sensor measurements.
+
+The algorithm checks the measurement availability and calls a function to correct our prediction.
 
 ```python
     # 3. Check availability of GNSS and LIDAR measurements
@@ -171,10 +173,44 @@ Measurements are processed sequentially by the EKF as they arrive; in our case, 
 | Sensor Noise Covariance    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BR%7D%3D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7B%5Csensor%7D%5E2%0A"> | `r_cov`  |
 | Kalman Gain                | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BK%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D(%5Cboldsymbol%7BH%7D_%7Bk%7D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D%2B%5Cboldsymbol%7BR%7D)%5E%7B-1%7D%0A"> | `k_gain` |
 
+This section of code defines the measurement update function
+
 ```python
 def measurement_update(sensor_var, p_cov_check, y_k, p_check, v_check, q_check):
     # 3.1 Compute Kalman Gain
     r_cov = np.eye(3)*sensor_var
     k_gain = p_cov_check @ h_jac.T @ np.linalg.inv((h_jac @ p_cov_check @ h_jac.T) + r_cov)
+```
+
+We use the Kalman gain to compute the error state. Considering the innovation or difference between our predicted vehicle position, `p_check`, and the measured position, `y_k`. 
+
+| Description | Equation                                                     | Variable      |
+| ----------- | ------------------------------------------------------------ | ------------- |
+| Error State | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7Bx%7D_%7Bk%7D%3D%5Cboldsymbol%7BK%7D_%7Bk%7D(%5Cboldsymbol%7By%7D_%7Bk%7D-%5Cboldsymbol%7B%5Ccheck%7Bp%7D%7D_%7Bk%7D)%0A"> | `error_state` |
+
+The error state is then used to update the nominal state vector. We also calculate the corrected nominal state covariance matrix, `p_cov_hat`.
+
+| Description                  | Equation                                                     | Variable    |
+| ---------------------------- | ------------------------------------------------------------ | ----------- |
+| *Corrected* Position         | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bp%7D%7D_%7Bk%7D%3D%5Ccheck%7B%5Cboldsymbol%7Bp%7D%7D_%7Bk%7D%2B%5Cdelta%5Cboldsymbol%7Bp%7D_%7Bk%7D%0A"> | `p_hat`     |
+| *Corrected* Velocity         | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bv%7D%7D_%7Bk%7D%3D%5Ccheck%7B%5Cboldsymbol%7Bv%7D%7D_%7Bk%7D%2B%5Cdelta%5Cboldsymbol%7Bv%7D_%7Bk%7D%0A"> | `v_hat`     |
+| *Corrected* Orientation      | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7Bq%7D(%5Cdelta%5Cboldsymbol%7B%5Cphi%7D_%7Bk%7D)%5Cotimes%5Ccheck%7B%5Cboldsymbol%7Bq%7D%7D_%7Bk%7D%0A"> | `q_hat`     |
+| *Corrected* State Covariance | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7BP%7D%7D_%7Bk%7D%3D(%5Cboldsymbol%7BI%7D-%5Cboldsymbol%7BK%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D)%5Ccheck%7B%5Cboldsymbol%7BP%7D%7D_%7Bk%7D%0A"> | `p_cov_hat` |
+
+Finally, the function returns the corrected state and state covariants.
+
+```python
+    # 3.2 Compute error state
+    error_state = k_gain @ (y_k - p_check)
+
+    # 3.3 Correct predicted state
+    p_hat = p_check + error_state[0:3]
+    v_hat = v_check + error_state[3:6]
+    q_hat = Quaternion(axis_angle=error_state[6:9]).quat_mult_left(Quaternion(*q_check))
+
+    # 3.4 Compute corrected covariance
+    p_cov_hat = (np.eye(9) - k_gain @ h_jac) @ p_cov_check
+
+    return p_hat, v_hat, q_hat, p_cov_hat
 ```
 
