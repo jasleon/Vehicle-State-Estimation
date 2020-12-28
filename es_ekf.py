@@ -290,7 +290,7 @@ p1_str = ''
 for val in p1_indices:
     for i in range(3):
         p1_str += '%.3f ' % (p_est[val, i])
-with open('pt1_submission.txt', 'w') as file:
+with open('output/pt1_submission.txt', 'w') as file:
     file.write(p1_str)
 
 # Pt. 2 submission
@@ -299,7 +299,7 @@ with open('pt1_submission.txt', 'w') as file:
 # for val in p2_indices:
 #     for i in range(3):
 #         p2_str += '%.3f ' % (p_est[val, i])
-# with open('pt2_submission.txt', 'w') as file:
+# with open('output/pt2_submission.txt', 'w') as file:
 #     file.write(p2_str)
 
 # Pt. 3 submission
@@ -308,5 +308,5 @@ with open('pt1_submission.txt', 'w') as file:
 # for val in p3_indices:
 #     for i in range(3):
 #         p3_str += '%.3f ' % (p_est[val, i])
-# with open('pt3_submission.txt', 'w') as file:
+# with open('output/pt3_submission.txt', 'w') as file:
 #     file.write(p3_str)
