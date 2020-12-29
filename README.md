@@ -1,7 +1,7 @@
 # Vehicle State Estimation on a Roadway
 This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to localize a vehicle using data from the [CARLA](https://carla.org/) simulator. The following diagram shows a graphical representation of the system.
 
-<img src="images\diagram.png" style="zoom: 80%;" />
+<img src="images\diagram.png" style="zoom: 67%;" />
 
 
 
@@ -11,6 +11,8 @@ The **Kalman Filter** algorithm updates a state estimate through two stages:
 
 1. *prediction* using the motion model
 2. *correction* using the measurement model
+
+[TOC]
 
 ## 1. Preliminaries
 
@@ -214,3 +216,22 @@ Finally, the function returns the corrected state and state covariants.
     return p_hat, v_hat, q_hat, p_cov_hat
 ```
 
+## 4. Vehicle Trajectory
+
+The algorithm generates visualizations by running the following command in the terminal.
+
+```bash
+python es_ekf.py
+```
+
+### 4.1. Ground Truth and Estimate
+
+This figure shows a comparison between the trajectory estimate and the ground truth.
+
+<img src="images\estimated-trajectory.gif" alt="estimated-trajectory"  />
+
+### 4.2. Estimation Error and Uncertainty Bounds
+
+This figure shows our estimator error relative to the ground truth. The dashed red lines represent three standard deviations from the ground truth, according to our estimator. These lines indicate how well our model fits the actual dynamics of the vehicle and how well the estimator is performing overall. The estimation error should remain within the three-sigma bounds at all times.
+
+<img src="images\error-plots.png" alt="error-plots" />
