@@ -1,7 +1,7 @@
 # Vehicle State Estimation on a Roadway
 This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to localize a vehicle using data from the [CARLA](https://carla.org/) simulator. The following diagram shows a graphical representation of the system.
 
-<img src="images\diagram.png" style="zoom: 67%;" />
+<img src="images\diagram.png" />
 
 
 
@@ -12,7 +12,15 @@ The **Kalman Filter** algorithm updates a state estimate through two stages:
 1. *prediction* using the motion model
 2. *correction* using the measurement model
 
-[TOC]
+## Table of Contents
+- [1. Preliminaries](#1.-Preliminaries)
+  - [1.1. Vehicle State Initialization](#1.1.-Vehicle-State-Initialization)
+- [2. Prediction](#2.-Prediction)
+  - [2.1. Motion Model](#2.1.-Motion-Model)
+  - [2.2. Predicted State](#2.2.-Predicted-State)
+  - [2.3. Error State Linearization](#2.3.-Error-State-Linearization)
+  - [2.4. Propagate Uncertainty](#2.4.-Propagate-Uncertainty)
+
 
 ## 1. Preliminaries
 
