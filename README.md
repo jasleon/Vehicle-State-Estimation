@@ -3,8 +3,6 @@ This project implements the Error-State **Extended Kalman Filter** (ES-EKF) to l
 
 <img src="images\diagram.png" />
 
-
-
 This project is the final programming assignment of the [State Estimation and Localization for Self-Driving Cars](https://www.coursera.org/learn/state-estimation-localization-self-driving-cars?) course from [Coursera](https://www.coursera.org/). The starter code is provided by the [University of Toronto](https://www.utoronto.ca/).
 
 The **Kalman Filter** algorithm updates a state estimate through two stages:
@@ -13,14 +11,20 @@ The **Kalman Filter** algorithm updates a state estimate through two stages:
 2. *correction* using the measurement model
 
 ## Table of Contents
-- [1. Preliminaries](#1.-Preliminaries)
-  - [1.1. Vehicle State Initialization](#1.1.-Vehicle-State-Initialization)
-- [2. Prediction](#2.-Prediction)
-  - [2.1. Motion Model](#2.1.-Motion-Model)
-  - [2.2. Predicted State](#2.2.-Predicted-State)
-  - [2.3. Error State Linearization](#2.3.-Error-State-Linearization)
-  - [2.4. Propagate Uncertainty](#2.4.-Propagate-Uncertainty)
-
+- [1. Preliminaries](#1-preliminaries)
+  - [1.1. Vehicle State Initialization](#11-vehicle-state-initialization)
+- [2. Prediction](#2-prediction)
+  - [2.1. Motion Model](#21-motion-model)
+  - [2.2. Predicted State](#22-predicted-state)
+  - [2.3. Error State Linearization](#23-error-state-linearization)
+  - [2.4. Propagate Uncertainty](#24-propagate-uncertainty)
+- [3. Correction](#3-correction)
+  - [3.1. Measurement Availability](#31-measurement-availability)
+  - [3.2. Measurement Model](#32-measurement-model)
+  - [3.3. Measurement Update](#33-measurement-update)
+- [4. Vehicle Trajectory](#4-vehicle-trajectory)
+  - [4.1. Ground Truth and Estimate](#41-ground-truth-and-estimate)
+  - [4.2. Estimation Error and Uncertainty Bounds](#42-estimation-error-and-uncertainty-bounds)
 
 ## 1. Preliminaries
 
@@ -236,10 +240,12 @@ python es_ekf.py
 
 This figure shows a comparison between the trajectory estimate and the ground truth.
 
-<img src="images\estimated-trajectory.gif" alt="estimated-trajectory"  />
+<p align="center">
+<img src="images\estimated-trajectory.gif" />
+</p>
 
 ### 4.2. Estimation Error and Uncertainty Bounds
 
 This figure shows our estimator error relative to the ground truth. The dashed red lines represent three standard deviations from the ground truth, according to our estimator. These lines indicate how well our model fits the actual dynamics of the vehicle and how well the estimator is performing overall. The estimation error should remain within the three-sigma bounds at all times.
 
-<img src="images\error-plots.png" alt="error-plots" />
+<img src="images\error-plots.png" />
