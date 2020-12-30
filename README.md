@@ -230,7 +230,7 @@ Finally, the function returns the corrected state and state covariants.
 
 ## 4. Vehicle Trajectory
 
-The algorithm generates visualizations by running the following command in the terminal.
+We evaluate the algorithm performance by comparing the estimated vehicle trajectory and the ground truth. The source code generates visualizations by running the following command in the terminal.
 
 ```bash
 python es_ekf.py
