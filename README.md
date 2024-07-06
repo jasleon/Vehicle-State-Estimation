@@ -34,8 +34,8 @@ The **vehicle state** at each time step consists of position, velocity, and orie
 
 | Description      | Equation |
 | ---------------- | -------- |
-| Vehicle State    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cx%7D_k%3D%5B%5Cboldsymbol%7B%5Cp%7D_k%2C%20%5Cboldsymbol%7B%5Cv%7D_k%2C%20%5Cboldsymbol%7B%5Cq%7D_k%5D%5E%7BT%7D%20%5Cin%20R%5E10%0A"> |
-| IMU Measurements | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cu%7D_k%3D%5B%5Cboldsymbol%7B%5Cf%7D_k%2C%20%5Cboldsymbol%7B%5Comega%7D_k%5D%5E%7BT%7D%20%5Cin%20R%5E6%0A"> |
+| Vehicle State    | $`\boldsymbol{x}_k=[\boldsymbol{p}_k, \boldsymbol{v}_k, \boldsymbol{q}_k]^{T} \in R^{10}`$ |
+| IMU Measurements | $`\boldsymbol{u}_k=[\boldsymbol{f}_k, \boldsymbol{\omega}_k]^{T} \in R^6`$ |
 
 This section of code initializes the variables for the ES-EKF solver.
 
@@ -64,9 +64,9 @@ The motion model of the vehicle is given by the following set of equations
 
 | Description | Equation                                                     |
 | ----------- | ------------------------------------------------------------ |
-| Position    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cp%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
-| Velocity    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cv%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> |
-| Orientation | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cq%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%3D%5Cboldsymbol%7B%5COmega%7D(%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt))%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%0A"> |
+| Position    | $`\boldsymbol{p}_k = \boldsymbol{p}_{k-1} + {\Delta}t\boldsymbol{v}_{k-1} + \frac{{\Delta}t^2}{2}(\boldsymbol{C}_{ns}\boldsymbol{f}_{k-1} + \boldsymbol{g})`$ |
+| Velocity    | $`\boldsymbol{v}_{k} = \boldsymbol{v}_{k-1} + {\Delta}t(\boldsymbol{C}_{ns}\boldsymbol{f}_{k-1} + \boldsymbol{g})`$ |
+| Orientation | $`\boldsymbol{q}_{k}=\boldsymbol{q}_{k-1}\otimes\boldsymbol{q}(\boldsymbol{\omega}_{k-1}{\Delta}t)=\boldsymbol{\Omega}(\boldsymbol{q}(\boldsymbol{\omega}_{k-1}{\Delta}t))\boldsymbol{q}_{k-1}`$ |
 
 ### 2.2. Predicted State
 
@@ -74,10 +74,10 @@ The **predicted** vehicle state is therefore given by the equations
 
 | Description             | Equation                                                     | Variable  |
 | ----------------------- | ------------------------------------------------------------ | --------- |
-| *Predicted* State       | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cx%7D%7D_%7Bk%7D%3D%5B%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%2C%20%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%5D%5ET%0A"> | `x_check` |
-| *Predicted* Position    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cp%7D%7D_k%20%3D%20%5Cboldsymbol%7B%5Cp%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%5Cfrac%7B%7B%5CDelta%7Dt%5E2%7D%7B2%7D(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> | `p_check` |
-| *Predicted* Velocity    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cv%7D%7D_%7Bk%7D%20%3D%20%5Cboldsymbol%7B%5Cv%7D_%7Bk-1%7D%20%2B%20%7B%5CDelta%7Dt(%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%20%2B%20%5Cboldsymbol%7B%5Cg%7D)%0A"> | `v_check` |
-| *Predicted* Orientation | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5Cq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Cq%7D_%7Bk-1%7D%5Cotimes%5Cboldsymbol%7B%5Cq%7D(%5Cboldsymbol%7B%5Comega%7D_%7Bk-1%7D%7B%5CDelta%7Dt)%0A"> | `q_check` |
+| *Predicted* State       | $`\boldsymbol{\check{x}}_{k}=[\boldsymbol{\check{p}}_{k}, \boldsymbol{\check{v}}_{k}, \boldsymbol{\check{q}}_{k}]^T`$ | `x_check` |
+| *Predicted* Position    | $`\boldsymbol{\check{p}}_k = \boldsymbol{p}_{k-1} + {\Delta}t\boldsymbol{v}_{k-1} + \frac{{\Delta}t^2}{2}(\boldsymbol{C}_{ns}\boldsymbol{f}_{k-1} + \boldsymbol{g})`$ | `p_check` |
+| *Predicted* Velocity    | $`\boldsymbol{\check{v}}_{k} = \boldsymbol{v}_{k-1} + {\Delta}t(\boldsymbol{C}_{ns}\boldsymbol{f}_{k-1} + \boldsymbol{g})`$ | `v_check` |
+| *Predicted* Orientation | $`\boldsymbol{\check{q}}_{k}=\boldsymbol{q}_{k-1}\otimes\boldsymbol{q}(\boldsymbol{\omega}_{k-1}{\Delta}t)`$ | `q_check` |
 
 This section of code iterates through the IMU inputs and updates the state.
 
@@ -103,17 +103,17 @@ The next step is to consider the linearized error dynamics of the system.
 
 | Description       | Equation                                                     |
 | ----------------- | ------------------------------------------------------------ |
-| Error State       | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk%7D%3D%5B%5Cdelta%5Cboldsymbol%7B%5Cp%7D_%7Bk%7D%2C%20%5Cdelta%5Cboldsymbol%7B%5Cv%7D_%7Bk%7D%2C%20%5Cdelta%5Cboldsymbol%7B%5Cphi%7D_%7Bk%7D%5D%5ET%20%5Cin%20R%5E9%0A"> |
-| Error Dynamics    | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%5Cdelta%5Cboldsymbol%7B%5Cx%7D_%7Bk-1%7D%2B%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%5Cboldsymbol%7B%5Cn%7D_%7Bk-1%7D%0A"> |
-| Measurement Noise | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Cn%7D_%7Bk%7D%5Csim%20N(%5Cboldsymbol%7B0%7D%2C%20%5Cboldsymbol%7BQ%7D_%7Bk%7D)%0A"> |
+| Error State       | $`\delta\boldsymbol{x}_{k}=[\delta\boldsymbol{p}_{k}, \delta\boldsymbol{v}_{k}, \delta\boldsymbol{\phi}_{k}]^T \in R^9`$ |
+| Error Dynamics    | $`\delta\boldsymbol{x}_{k}=\boldsymbol{F}_{k-1}\delta\boldsymbol{x}_{k-1}+\boldsymbol{L}_{k-1}\boldsymbol{n}_{k-1}`$ |
+| Measurement Noise | $`\boldsymbol{n}_{k}\sim N(\boldsymbol{0}, \boldsymbol{Q}_{k})`$ |
 
 The Jacobians and the noise covariance matrix are defined as follows
 
 | Description                 | Equation                                                     | Variable |
 | --------------------------- | ------------------------------------------------------------ | -------- |
-| Motion Model Jacobian       | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7B%5CI%7D%26%5Cboldsymbol%7B%5CI%7D%5Ccdot%5CDelta%20t%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%26-%5B%5Cboldsymbol%7B%5CC%7D_%7Bns%7D%5Cboldsymbol%7B%5Cf%7D_%7Bk-1%7D%5D_%7B%5Ctimes%7D%5CDelta%20t%5C%5C0%260%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `f_jac`  |
-| Motion Model Noise Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%3D%5Cbegin%7Bbmatrix%7D0%260%5C%5C%5Cboldsymbol%7B%5CI%7D%260%5C%5C0%26%5Cboldsymbol%7B%5CI%7D%5Cend%7Bbmatrix%7D%0A"> | `l_jac`  |
-| IMU Noise Covariance        | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5CQ%7D_%7Bk%7D%3D%5CDelta%20t%5E2%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bacc%7D%5E2%260%5C%5C0%26%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7Bgyro%7D%5E2%5Cend%7Bbmatrix%7D%0A"> | `q_cov`  |
+| Motion Model Jacobian       | $`\boldsymbol{F}_{k-1}=\begin{bmatrix}\boldsymbol{I}&\boldsymbol{I}\cdot\Delta t&0\\0&\boldsymbol{I}&-[\boldsymbol{C}_{ns}\boldsymbol{f}_{k-1}]_{\times}\Delta t\\0&0&\boldsymbol{I}\end{bmatrix}`$ | `f_jac`  |
+| Motion Model Noise Jacobian | $`\boldsymbol{L}_{k-1}=\begin{bmatrix}0&0\\\boldsymbol{I}&0\\0&\boldsymbol{I}\end{bmatrix}`$ | `l_jac`  |
+| IMU Noise Covariance        | $`\boldsymbol{Q}_{k}=\Delta t^2\begin{bmatrix}\boldsymbol{I}\cdot\sigma_{acc}^2&0\\0&\boldsymbol{I}\cdot\sigma_{gyro}^2\end{bmatrix}`$ | `q_cov`  |
 
 where ***I*** is the 3 by 3 identity matrix.
 
@@ -134,7 +134,7 @@ The uncertainty in the state is captured by the state covariance (uncertainty) m
 
 | Description                  | Equation                                                     | Variable      |
 | ---------------------------- | ------------------------------------------------------------ | ------------- |
-| *Predicted* State Covariance | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7B%5Ccheck%7B%5CP%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%5Cboldsymbol%7B%5CP%7D_%7Bk-1%7D%5Cboldsymbol%7B%5CF%7D_%7Bk-1%7D%5E%7BT%7D%2B%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%5Cboldsymbol%7B%5CQ%7D_%7Bk-1%7D%5Cboldsymbol%7B%5CL%7D_%7Bk-1%7D%5E%7BT%7D%0A"> | `p_cov_check` |
+| *Predicted* State Covariance | $`\boldsymbol{\check{P}}_{k}=\boldsymbol{F}_{k-1}\boldsymbol{P}_{k-1}\boldsymbol{F}_{k-1}^{T}+\boldsymbol{L}_{k-1}\boldsymbol{Q}_{k-1}\boldsymbol{L}_{k-1}^{T}`$ | `p_cov_check` |
 
 This section of code calculates the state uncertainty
 
@@ -173,9 +173,9 @@ The measurement model is the same for both sensors. However, they have different
 
 | Description             | Equation                                                     |
 | ----------------------- | ------------------------------------------------------------ |
-| Measurement Model       | <img src="https://render.githubusercontent.com/render/math?math=%5Cbegin%7Bsplit%7D%0A%5Cboldsymbol%7By%7D_%7Bk%7D%20%26%3D%20%5Cboldsymbol%7Bh%7D(%5Cboldsymbol%7Bx%7D_%7Bk%7D)%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5C%5C%0A%26%20%3D%5Cboldsymbol%7BH%7D_%7Bk%7D%5Cboldsymbol%7Bx%7D_%7Bk%7D%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5C%5C%0A%26%20%3D%20%5Cboldsymbol%7Bp%7D_%7Bk%7D%2B%5Cboldsymbol%7Bv%7D_%7Bk%7D%0A%5Cend%7Bsplit%7D%0A"> |
-| GNSS Measurement Noise  | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5Csim%20N(0%2C%20%5Cboldsymbol%7BR%7D_%7B%5CGNSS%7D)%0A"> |
-| LIDAR Measurement Noise | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7Bv%7D_%7Bk%7D%20%5Csim%20N(0%2C%20%5Cboldsymbol%7BR%7D_%7B%5CLIDAR%7D)%0A"> |
+| Measurement Model       | $`\begin{split} \boldsymbol{y}_{k} &= \boldsymbol{h}(\boldsymbol{x}_{k})+\boldsymbol{v}_{k} \\ & =\boldsymbol{H}_{k}\boldsymbol{x}_{k}+\boldsymbol{v}_{k} \\ & = \boldsymbol{p}_{k}+\boldsymbol{v}_{k} \end{split}`$ |
+| GNSS Measurement Noise  | $`\boldsymbol{v}_{k} \sim N(0, \boldsymbol{R}_{GNSS})`$ |
+| LIDAR Measurement Noise | $`\boldsymbol{v}_{k} \sim N(0, \boldsymbol{R}_{LIDAR})`$ |
 
 ### 3.3. Measurement Update
 
@@ -183,9 +183,9 @@ Measurements are processed sequentially by the EKF as they arrive; in our case, 
 
 | Description                | Equation                                                     | Variable |
 | -------------------------- | ------------------------------------------------------------ | -------- |
-| Measurement Model Jacobian | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BH%7D_%7Bk%7D%3D%5Cbegin%7Bbmatrix%7D%5Cboldsymbol%7BI%7D%260%260%5C%5C%5Cend%7Bbmatrix%7D%0A"> | `h_jac`  |
-| Sensor Noise Covariance    | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BR%7D%3D%5Cboldsymbol%7BI%7D%5Ccdot%5Csigma_%7B%5Csensor%7D%5E2%0A"> | `r_cov`  |
-| Kalman Gain                | <img src="https://render.githubusercontent.com/render/math?math=%5Cboldsymbol%7BK%7D_%7Bk%7D%3D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D(%5Cboldsymbol%7BH%7D_%7Bk%7D%5Cboldsymbol%7B%5Ccheck%7BP%7D%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D%5E%7BT%7D%2B%5Cboldsymbol%7BR%7D)%5E%7B-1%7D%0A"> | `k_gain` |
+| Measurement Model Jacobian | $`\boldsymbol{H}_{k}=\begin{bmatrix}\boldsymbol{I}&0&0\\\end{bmatrix}`$ | `h_jac`  |
+| Sensor Noise Covariance    | $`\boldsymbol{R}=\boldsymbol{I}\cdot\sigma_{sensor}^2`$ | `r_cov`  |
+| Kalman Gain                | $`\boldsymbol{K}_{k}=\boldsymbol{\check{P}}_{k}\boldsymbol{H}_{k}^{T}(\boldsymbol{H}_{k}\boldsymbol{\check{P}}_{k}\boldsymbol{H}_{k}^{T}+\boldsymbol{R})^{-1}`$ | `k_gain` |
 
 This section of code defines the measurement update function
 
@@ -200,16 +200,16 @@ We use the Kalman gain to compute the error state. Considering the innovation or
 
 | Description | Equation                                                     | Variable      |
 | ----------- | ------------------------------------------------------------ | ------------- |
-| Error State | <img src="https://render.githubusercontent.com/render/math?math=%5Cdelta%5Cboldsymbol%7Bx%7D_%7Bk%7D%3D%5Cboldsymbol%7BK%7D_%7Bk%7D(%5Cboldsymbol%7By%7D_%7Bk%7D-%5Cboldsymbol%7B%5Ccheck%7Bp%7D%7D_%7Bk%7D)%0A"> | `error_state` |
+| Error State | $`\delta\boldsymbol{x}_{k}=\boldsymbol{K}_{k}(\boldsymbol{y}_{k}-\boldsymbol{\check{p}}_{k})`$ | `error_state` |
 
 The error state is then used to update the nominal state vector. We also calculate the corrected nominal state covariance matrix, `p_cov_hat`.
 
 | Description                  | Equation                                                     | Variable    |
 | ---------------------------- | ------------------------------------------------------------ | ----------- |
-| *Corrected* Position         | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bp%7D%7D_%7Bk%7D%3D%5Ccheck%7B%5Cboldsymbol%7Bp%7D%7D_%7Bk%7D%2B%5Cdelta%5Cboldsymbol%7Bp%7D_%7Bk%7D%0A"> | `p_hat`     |
-| *Corrected* Velocity         | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bv%7D%7D_%7Bk%7D%3D%5Ccheck%7B%5Cboldsymbol%7Bv%7D%7D_%7Bk%7D%2B%5Cdelta%5Cboldsymbol%7Bv%7D_%7Bk%7D%0A"> | `v_hat`     |
-| *Corrected* Orientation      | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7Bq%7D%7D_%7Bk%7D%3D%5Cboldsymbol%7Bq%7D(%5Cdelta%5Cboldsymbol%7B%5Cphi%7D_%7Bk%7D)%5Cotimes%5Ccheck%7B%5Cboldsymbol%7Bq%7D%7D_%7Bk%7D%0A"> | `q_hat`     |
-| *Corrected* State Covariance | <img src="https://render.githubusercontent.com/render/math?math=%5Chat%7B%5Cboldsymbol%7BP%7D%7D_%7Bk%7D%3D(%5Cboldsymbol%7BI%7D-%5Cboldsymbol%7BK%7D_%7Bk%7D%5Cboldsymbol%7BH%7D_%7Bk%7D)%5Ccheck%7B%5Cboldsymbol%7BP%7D%7D_%7Bk%7D%0A"> | `p_cov_hat` |
+| *Corrected* Position         | $`\hat{\boldsymbol{p}}_{k}=\check{\boldsymbol{p}}_{k}+\delta\boldsymbol{p}_{k}`$ | `p_hat`     |
+| *Corrected* Velocity         | $`\hat{\boldsymbol{v}}_{k}=\check{\boldsymbol{v}}_{k}+\delta\boldsymbol{v}_{k}`$ | `v_hat`     |
+| *Corrected* Orientation      | $`\hat{\boldsymbol{q}}_{k}=\boldsymbol{q}(\delta\boldsymbol{\phi}_{k})\otimes\check{\boldsymbol{q}}_{k}`$ | `q_hat`     |
+| *Corrected* State Covariance | $`\hat{\boldsymbol{P}}_{k}=(\boldsymbol{I}-\boldsymbol{K}_{k}\boldsymbol{H}_{k})\check{\boldsymbol{P}}_{k}`$ | `p_cov_hat` |
 
 Finally, the function returns the corrected state and state covariants.
 
